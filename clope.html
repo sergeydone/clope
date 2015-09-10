@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+body {
+	width: 500px;
+	margin: 0 auto;
+}
+button{
+	margin: 20px 150px;
+}
+input{
+	width: 490px;
+}
+#out {
+	word-wrap: break-word;
+}
+</style>
+</head>
+
+<body>
+<h1>Attempt to implement clustering algorithm by Sergei </h1>
+<div id="inData">input:
+<form name="inputArea">
+	<input type="text" id="inputData" value="aa,bcd,cbbb,aba,eft,ab,rem">
+</form>
+</div>
+<hr>
+<button id="clickMe"> Click me for clustering </button>
+<hr>
+<div id="out">output</div>
+<script>
+
+var t=[]; 
+var index=new Array(t.length); 
+var clasters=[];
+
+function newC(x) {    // функция конструктор кластера
+	this.c = x; // новый кластер
+};
+
+newC.prototype.full=function(){
+	if (!this.c[0]) return false; else return true;
+};
+
+newC.prototype.n=function(){ // количество транзакций в кластере
+	return this.c.length;
+}; 
+
+newC.prototype.s=function(){
+	var x1=this.c.join(""); 
+	return x1.length;
+}; 
+newC.prototype.w=function(){ // ширина кластера (к-во уникальных объектров);
+	var x1=this.c.join("").split(""); 
+	var s=0; var k=0;
+	var x2=[];
+	var length=x1.length;
+	for (var i=0; i<length; i++) { 
+		if(!x1[i]) continue;
+		var str=x1[i];
+		for (var j=i+1; j<length; j++){
+				if(!x1[j]) continue;
+				if(x1[j]==str) {
+					delete x1[j];  
+				}
+		}
+	};
+	var x2=x1.filter(function(){ return true;});
+	return x2.length; 
+}; 
+
+newC.prototype.occ=function(y){  // число вхождений (к-во экземпляров элемента в кластере);
+	var x1=this.c.join("").split("");
+	var s=0;
+	for (var i=0; i<x1.length; i++) {
+		if (x1[i] == y) s++;
+		}
+	return s;
+}; 
+
+function leadInArray(){ //функция получения исходных данных для кластеризации
+	var leadIn = document.getElementById("inputData");
+	var leadInData = leadIn.value.toString(); 
+	t = leadInData.split(",");
+	index=new Array(t.length);
+	return t;
+};
+
+// Обработчик нажатий кнопки, запускающий выполнение программы
+var clicker=document.getElementById("clickMe");
+clicker.addEventListener("click", function(){ leadInArray(); });
+clicker.addEventListener("click", function(){document.getElementById("out").innerHTML = "otput:<br>"+aboutBuilding();});
+clicker.addEventListener("click", function(){ 
+	t=[];
+	index=new Array(t.length); 
+	clasters=[];
+});
+
+
+
+function deltaAdd(cx,t,r) { // ф-я изм. критерия качества при добавлении транзакции в кластер
+	var sFull = cx.full();
+	if (!sFull) { //если кластер пуст, то проверка по упрощенной схеме
+		var cy=make(cx, t);
+		var sNew = cy.s(); 
+		var wNew = cy.w(); 
+		var result1=sNew/wNew; 
+		var result2=0;
+		clean(cy);
+	}
+	else {  //если кластер полон, то проверка по полной программе
+		var sNew = cx.s() + t.length;
+    	var wNew = cx.w();
+    	for (var i=0; i<t.length; i++) { 
+	   		if (cx.occ(t[i])==0) wNew=wNew + 1;
+    	}
+    	var result1 = sNew*(cx.n()+1)/(wNew); 
+    	var result2 = cx.s()*cx.n()/cx.w(); 
+    	var result=result1-result2;
+	}
+  	return result1-result2;
+};
+
+function make(cx,t){  //ф-я добавления транзакции в кластер
+ 	cx=new newC([t]);
+	return cx;
+};
+
+
+ function add(cx,t){  //ф-я добавления транзакции в кластер
+	if (!cx.c[0]) cx.c[0]=t; else cx.c.push(t);
+	return cx;
+};
+
+function clean(cx){ // функция удаления пробной транзакции из кластера 
+	cx.c.pop();
+	return cx;
+};
+
+function aboutBuilding(){ // функция построения кластеров
+	for (var i=0; i<t.length; i++){ // перебор массива транзакций
+		var bigMax=0; var indexMax=0; 
+		if (!clasters.length) { clasters[0]=make(clasters[0],t[i]); 
+		continue;} 
+		else { clasters[clasters.length]=make(clasters[clasters.length],"");}
+		for (var j=0; j<clasters.length; j++) {  
+			var max=deltaAdd(clasters[j],t[i],1); 
+	 		if(max>bigMax) { bigMax=max; indexMax=j; 
+	 		}
+ 		}
+ 		add(clasters[indexMax],t[i]); //добавление транзакции в кластер
+ 		index[i]=indexMax; // сохранение номера кластера в который внесена транзакция
+	}
+	var building = "";
+	for (var k=0; k<clasters.length; k++) {
+		building+=clasters[k].c+" <br> ";
+	}
+	return building;
+};
+
+// only one pass!
+// sorry for bad js
+
+</script> 
+</body>
+</html>
